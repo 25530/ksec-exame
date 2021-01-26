@@ -16,6 +16,7 @@
                     <?php echo e(__('You are logged in!')); ?>
 
                 </div>
+                <a href="<?php echo e(route('crud.index')); ?>" class="btn btn-default">Upload</a>
             </div>
         </div>
     </div>
