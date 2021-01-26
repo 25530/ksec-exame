@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 use App\Crud;
 use Illuminate\Http\Request;
-
+use DB;
 class CrudsController extends Controller
 {
     /**
@@ -11,6 +11,11 @@ class CrudsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
         $data = Crud::latest()->paginate(5);
@@ -39,17 +44,17 @@ class CrudsController extends Controller
         $request->validate([
             'title'    =>  'required',
             'description'     =>  'required',
-            'video'         =>  'required|image|max:2048'
+            'video'         =>  'required|mimes:mp4,webm,oog|max:5000000'
         ]);
 
         $image = $request->file('video');
 
-        $new_name = rand() . '.' . $image->getClientOriginalExtension();
-        $image->move(public_path('video'), $new_name);
+        $video = rand() . '.' . $image->getClientOriginalExtension();
+        $image->move(public_path('video'), $video);
         $form_data = array(
-            'title'       =>   $request->first_name,
-            'description'        =>   $request->last_name,
-            'video'            =>   $new_name
+            'title'       =>   $request->title,
+            'description'        =>   $request->description,
+            'video'            =>   $video
         );
 
         Crud::create($form_data);
@@ -92,18 +97,18 @@ class CrudsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $image_name = $request->hidden_image;
+        $video = $request->hidden_image;
         $image = $request->file('video');
         if($image != '')
         {
             $request->validate([
                 'title'    =>  'required',
                 'description'     =>  'required',
-                'video'         =>  'image|max:2048'
+                'video'         =>  'mimes:mp4,webm,oog|max:5000000'
             ]);
 
-            $image_name = rand() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('video'), $image_name);
+            $video = rand() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('video'), $video);
         }
         else
         {
@@ -114,9 +119,9 @@ class CrudsController extends Controller
         }
 
         $form_data = array(
-            'title'       =>   $request->first_name,
-            'description'        =>   $request->last_name,
-            'video'            =>   $image_name
+            'title'       =>   $request->title,
+            'description'        =>   $request->description,
+            'video'            =>   $video
         );
   
         Crud::whereId($id)->update($form_data);
@@ -136,5 +141,11 @@ class CrudsController extends Controller
         $data->delete();
 
         return redirect('crud')->with('success', 'Data is successfully deleted');
+    }
+    public function search(Request $request)
+    {
+        $search = $request->get('search');
+        $data = DB::table('cruds')->where('title','like', '%'.$search.'%')->paginate(5);
+        return view('index', ['data' => $data]);
     }
 }
